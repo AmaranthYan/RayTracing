@@ -23,12 +23,12 @@ worley_256 worley;
 constexpr unsigned cpu_cores = 8; // 16
 
 double aspect_ratio = 1.0;
-unsigned image_width = 300;
+unsigned image_width = 600;
 unsigned image_height = static_cast<unsigned>(image_width / aspect_ratio);
 
 stbi_uc* out; // output uint8 array
 
-constexpr int samples_per_pixel = 64;
+constexpr int samples_per_pixel = 128;
 constexpr int max_depth = 50;
 #define USE_BVH
 
@@ -57,20 +57,20 @@ vec3 color(const ray& r, const std::shared_ptr<hittable>& world, const std::shar
 
 	if (result.mat->scatter(r, result, record))
 	{
-		if (record.specular)
+		if (record.is_specular)
 		{
-			return emitted + record.atten * color(record.spec, world, lights, depth - 1);
+			return emitted + record.spec_atten * color(record.spec_scatt, world, lights, depth - 1);
 		}
 
 		shared_ptr<pdf> pdf;
 		if (lights)
 		{
 			auto light_pdf = make_shared<hittable_pdf>(result.pos, lights);
-			pdf = make_shared<mix_pdf>(light_pdf, record.pdf, 0.5);
+			pdf = make_shared<mix_pdf>(light_pdf, record.sample_pdf, 0.5);
 		}
 		else
 		{
-			pdf = record.pdf;
+			pdf = record.sample_pdf;
 		}
 		
 		auto scatt = ray(result.pos, pdf->generate(r.tm()), r.tm());
@@ -79,7 +79,7 @@ vec3 color(const ray& r, const std::shared_ptr<hittable>& world, const std::shar
 		// avoid NaN caused by very low probability rays
 		if (proba > 1e-8)
 		{
-			return emitted + record.atten * result.mat->scattering_pdf(r, result, scatt) * color(scatt, world, lights, depth - 1) / proba;
+			return emitted + result.mat->brdf_cos(r, result, scatt) * color(scatt, world, lights, depth - 1) / proba;
 		}
 	}
 	return emitted;
@@ -295,7 +295,7 @@ int main()
 	std::shared_ptr<hittable_list> world;
 	std::shared_ptr<hittable_list> lights;
 
-	switch (4)
+	switch (2)
 	{
 	case 0: // Ray Tracing in One Weekend
 		aspect_ratio = 3.0 / 2.0;

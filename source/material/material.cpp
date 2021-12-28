@@ -19,16 +19,23 @@ __forceinline vec3 random_cos_direction()
 
 bool lambertian::scatter(const ray& r, const hit_result& hit, scatter_record& scatt) const
 {
-	scatt.atten = this->albedo->sample(hit.u, hit.v, hit.pos);
-	scatt.pdf = std::make_shared<cos_pdf>(hit.norm);
-	scatt.specular = false;
+	scatt.set_non_specular(std::make_shared<cos_pdf>(hit.norm));
 	return !vec3::is_back(r.dir(), hit.norm);
 }
 
-double lambertian::scattering_pdf(const ray& r, const hit_result& hit, const ray& scatt) const
+vec3 lambertian::brdf_cos(const ray& r, const hit_result& hit, const ray& scatt) const
 {
-	auto cos = vec3::dot(hit.norm, vec3::unit(scatt.dir()));
-	return cos < 0.0 ? 0.0 : cos / M_PI;
+	auto cos_pi = vec3::dot(hit.norm, vec3::unit(scatt.dir())) / M_PI;
+	if (cos_pi > 0)
+	{
+		// Lambert BRDF = A/Pi
+		auto atten = this->albedo->sample(hit.u, hit.v, hit.pos) * cos_pi;
+		return atten;
+	}
+	else
+	{
+		return vec3(0.0, 0.0, 0.0);
+	}
 }
 
 bool metal::scatter(const ray& r, const hit_result& hit, scatter_record& scatt) const
@@ -38,14 +45,13 @@ bool metal::scatter(const ray& r, const hit_result& hit, scatter_record& scatt) 
 
 	auto udir = vec3::unit(r.dir());
 	vec3 reflected = reflect(udir, norm);
-	scatt.spec = ray(hit.pos, reflected + this->fuzz * vec3::random_unit_sphere(), r.tm());
+	auto spec = ray(hit.pos, reflected + this->fuzz * vec3::random_unit_sphere(), r.tm());
 
 	auto cos = fmin(-vec3::dot(udir, norm), 1.0);
-	scatt.atten = metal::reflectance(cos, this->albedo->sample(hit.u, hit.v, hit.pos)); // use albedo as r0
+	auto atten = metal::reflectance(cos, this->albedo->sample(hit.u, hit.v, hit.pos)); // use albedo as r0
 
-	scatt.pdf = nullptr;
-	scatt.specular = true;
-	return vec3::dot(scatt.spec.dir(), norm) > 0;
+	scatt.set_specular(spec, atten);
+	return vec3::dot(spec.dir(), norm) > 0;
 }
 
 bool dielectric::scatter(const ray& r, const hit_result& hit, scatter_record& scatt) const
@@ -60,42 +66,38 @@ bool dielectric::scatter(const ray& r, const hit_result& hit, scatter_record& sc
 	auto sin = sqrt(1.0 - cos * cos);
 	bool no_refract = refract_ratio * sin > 1.0;
 
-	vec3 spec;
+	vec3 ref;
 	if (no_refract || dielectric::reflectance(cos, refract_ratio) > drand())
 	{
-		spec = reflect(udir, norm);
+		ref = reflect(udir, norm);
 	}
 	else
 	{
-		spec = refract(udir, norm, refract_ratio);
+		ref = refract(udir, norm, refract_ratio);
 
 	}
-	scatt.spec = ray(hit.pos, spec, r.tm());
+	auto spec = ray(hit.pos, ref, r.tm());
 
+	vec3 atten(1.0, 1.0, 1.0);
 	if (back)
 	{
 		// absorption based on traveled distance of the ray inside dielectric
 		auto dist = (hit.pos - r.ori()).length();
-		scatt.atten = dielectric::absorption(absorb, dist);
+		atten = dielectric::absorption(absorb, dist);
 	}
-	else
-	{
-		scatt.atten = vec3(1.0, 1.0, 1.0);
-	}
-	scatt.pdf = nullptr;
-	scatt.specular = true;
+
+	scatt.set_specular(spec, atten);
 	return true;
 }
 
 bool isotropic::scatter(const ray& r, const hit_result& hit, scatter_record& scatt) const
 {
-	scatt.atten = albedo->sample(hit.u, hit.v, hit.pos);
-	scatt.pdf = std::make_shared<uniform_pdf>();
-	scatt.specular = false;
+	scatt.set_non_specular(std::make_shared<uniform_pdf>());
 	return true;
 }
 
-double isotropic::scattering_pdf(const ray& r, const hit_result& hit, const ray& scatt) const
+vec3 isotropic::brdf_cos(const ray& r, const hit_result& hit, const ray& scatt) const
 {
-	return 1.0 / (4.0 * M_PI);
+	auto atten = albedo->sample(hit.u, hit.v, hit.pos);
+	return atten / (4.0 * M_PI);
 }

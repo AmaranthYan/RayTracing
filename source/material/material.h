@@ -6,10 +6,27 @@
 
 struct scatter_record
 {
-	std::shared_ptr<pdf> pdf;
-	ray spec; // specular ray
-	vec3 atten;
-	bool specular;
+	void set_specular(const ray& scatt,const vec3& atten)
+	{
+		is_specular = true;
+		spec_scatt = scatt;
+		spec_atten = atten;
+	}
+
+	void set_non_specular(const std::shared_ptr<pdf>& pdf)
+	{
+		is_specular = false;
+		sample_pdf = pdf;
+	}
+
+	// non-specular ray
+	std::shared_ptr<pdf> sample_pdf;
+	
+	// specular ray
+	ray spec_scatt; 
+	vec3 spec_atten;
+
+	bool is_specular;
 };
 
 __forceinline vec3 reflect(const vec3& v, const vec3& n)
@@ -31,7 +48,7 @@ public:
 	virtual ~material() = default;
 
 	virtual bool scatter(const ray& r, const hit_result& hit, scatter_record& scatt) const = 0;
-	virtual double scattering_pdf(const ray& r, const hit_result& hit, const ray& scatt) const { return 0.0; };
+	virtual vec3 brdf_cos(const ray& r, const hit_result& hit, const ray& scatt) const { return vec3(0.0, 0.0, 0.0); };
 	virtual vec3 emit(const ray& r, const hit_result& hit) const { return vec3(0.0, 0.0, 0.0); };
 };
 
@@ -43,7 +60,7 @@ public:
 	lambertian(const vec3& c) : lambertian(std::make_shared<solid_color>(c)) {}
 
 	virtual bool scatter(const ray& r, const hit_result& hit, scatter_record& scatt) const override;
-	virtual double scattering_pdf(const ray& r, const hit_result& hit, const ray& scatt) const override;
+	virtual vec3 brdf_cos(const ray& r, const hit_result& hit, const ray& scatt) const override;
 
 private:
 	std::shared_ptr<texture> albedo;
@@ -129,7 +146,7 @@ public:
 	isotropic(const vec3& c) : isotropic(std::make_shared<solid_color>(c)) {}
 
 	virtual bool scatter(const ray& r, const hit_result& hit, scatter_record& scatt) const override;
-	virtual double scattering_pdf(const ray& r, const hit_result& hit, const ray& scatt) const override;
+	virtual vec3 brdf_cos(const ray& r, const hit_result& hit, const ray& scatt) const override;
 
 private:
 	std::shared_ptr<texture> albedo;
