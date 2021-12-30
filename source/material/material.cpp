@@ -26,7 +26,7 @@ bool lambertian::scatter(const ray& r, const hit_result& hit, scatter_record& sc
 vec3 lambertian::brdf_cos(const ray& r, const hit_result& hit, const ray& scatt) const
 {
 	auto cos_pi = vec3::dot(hit.norm, vec3::unit(scatt.dir())) / M_PI;
-	if (cos_pi > 0)
+	if (cos_pi > 0.0)
 	{
 		// Lambert BRDF = A/Pi
 		auto atten = this->albedo->sample(hit.u, hit.v, hit.pos) * cos_pi;

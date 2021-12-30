@@ -79,7 +79,12 @@ vec3 color(const ray& r, const std::shared_ptr<hittable>& world, const std::shar
 		// avoid NaN caused by very low probability rays
 		if (proba > 1e-8)
 		{
-			return emitted + result.mat->brdf_cos(r, result, scatt) * color(scatt, world, lights, depth - 1) / proba;
+			auto atten = result.mat->brdf_cos(r, result, scatt);
+			// early out if BRDF yields 0
+			if (atten.length_sqr() > 0.0)
+			{
+				return emitted + atten * color(scatt, world, lights, depth - 1) / proba;
+			}
 		}
 	}
 	return emitted;
@@ -249,11 +254,12 @@ void demo_scene(shared_ptr<hittable_list>& world, shared_ptr<hittable_list>& lig
 	cornell_box(world, lights);	
 	
 	// cloud block
-	shared_ptr<hittable> block = make_shared<aligned_box>(vec3(0, 280, 0), vec3(240, 400, 240), nullptr);
-	block = make_shared<rotate>(block, vec3(0, 1, 0), 15);
-	block = make_shared<translate>(block, vec3(215, 0, 225));
+	shared_ptr<hittable> block = make_shared<aligned_box>(vec3(0, 260, 0), vec3(260, 420, 260), nullptr);
+	//block = make_shared<rotate>(block, vec3(0, 1, 0), 15);
+	block = make_shared<translate>(block, vec3(225, 0, 225));
 	//objects.add_hittable(make_shared<noise_medium<decltype(perlin)>>(box1, 0.01, vec3(0, 0, 0), perlin, 0, 0.1));
-	auto cloud_block = make_shared<cloud<decltype(perlin), decltype(worley)>>(block, 0.08, vec3(1.0, 1.0, 1.0), perlin, worley, 1.0 / 128.0, 0.8);
+	auto cloud_block = make_shared<cloud<decltype(perlin), decltype(worley)>>(block, 0.08, vec3(1.0, 1.0, 1.0), perlin, worley, 1.0 / 128.0, 0.81);
+	cloud_block->set_height_fading(280, 400, 20); // fading based on height
 	world->add_hittable(cloud_block);
 	// importance sample the block box
 	lights->add_hittable(block);
@@ -281,7 +287,7 @@ void demo_scene(shared_ptr<hittable_list>& world, shared_ptr<hittable_list>& lig
 *  optimized random functions
 *  expendable threaded rendering and fixed-size thread buffer memory
 *  Surface Area Heuristic(SAH) based BVH with visual debugging option
-*  non-uniform cloud volume with 3D Perlin-Worley noise
+*  non-uniform non-convex cloud volume with 3D Perlin-Worley noise
 *  simple obj model loading and triangle mesh support
 *  TODO Glossy material using Cook-Torrance BRDF model
 * 
@@ -295,7 +301,7 @@ int main()
 	std::shared_ptr<hittable_list> world;
 	std::shared_ptr<hittable_list> lights;
 
-	switch (2)
+	switch (4)
 	{
 	case 0: // Ray Tracing in One Weekend
 		aspect_ratio = 3.0 / 2.0;

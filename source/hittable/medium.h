@@ -42,10 +42,19 @@ template<class NOISE_P, class NOISE_W>
 class cloud : public medium
 {
 public:
-	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w) : medium(b, d, a), perlin(p), worley(w), freq(0.5), cov(0.85) {}
-	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w, double fq, double cv) : medium(b, d, a), perlin(p), worley(w), freq(fq), cov(cv) {}
+	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w) : medium(b, d, a), perlin(p), worley(w), freq(0.5), cov(0.85), height_fading(false), height_min(), height_max(), fade_dist() {}
+	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w, double fq, double cv) : medium(b, d, a), perlin(p), worley(w), freq(fq), cov(cv), height_fading(false), height_min(), height_max(), fade_dist() {}
 	cloud(const std::shared_ptr<hittable>& b, double d, const vec3& c, const NOISE_P& p, const NOISE_W& w) : cloud(b, d, std::make_shared<solid_color>(c), p, w) {}
 	cloud(const std::shared_ptr<hittable>& b, double d, const vec3& c, const NOISE_P& p, const NOISE_W& w, double fq, double cv) : cloud(b, d, std::make_shared<solid_color>(c), p, w, fq, cv) {}
+
+	void set_height_fading(double min, double max, double dist)
+	{
+		height_min = min;
+		height_max = max;
+		fade_dist = dist;
+
+		height_fading = true;
+	}
 
 	virtual bool hit(const ray& r, double t_min, double t_max, hit_result& res) const override;
 
@@ -57,17 +66,37 @@ private:
 	const NOISE_W& worley;
 	double freq;
 	double cov;
+
+	double height_min, height_max;
+	double fade_dist;
+	bool height_fading;
 };
 
 template<class NOISE_P, class NOISE_W>
 double cloud<NOISE_P, NOISE_W>::density(const vec3& pos) const
 {
-	const auto w = worley.turbulence(pos * freq);
-	auto p = abs(perlin.turbulence(pos * 4.0 * freq, 7));
+	const auto w = this->worley.turbulence(pos * this->freq);
+	auto p = abs(this->perlin.turbulence(pos * 4.0 * this->freq, 7));
 	p = remap(p, 0.0, 1.0, w, 1.0); // Perlin-Worley
-	const auto t = 0.625 * worley.turbulence(pos * 2.0 * freq) + 0.25 * worley.turbulence(pos * 4.0 * freq) + 0.125 * worley.turbulence(pos * 8.0 * freq);
+	const auto t = 0.625 * this->worley.turbulence(pos * 2.0 * this->freq) + 0.25 * this->worley.turbulence(pos * 4.0 * this->freq) + 0.125 * this->worley.turbulence(pos * 8.0 * this->freq);
 	auto k = remap(p, t - 1.0, 1.0, 0.0, 1.0);
-	k = clamp(remap(k, cov, 1.0, 0.0, 1.0), 0.0, 1.0); // cloud coverage
+
+	auto c = this->cov;
+	if (this->height_fading)
+	{
+		// coverage fading on y-axis
+		if (pos.y < this->height_min)
+		{
+			c = remap(pos.y, this->height_min, this->height_min - this->fade_dist, c, 1.0);
+		}
+		else if (pos.y > this->height_max)
+		{
+			c = remap(pos.y, this->height_max, this->height_max + this->fade_dist, c, 1.0);
+		}
+	}	
+	c = std::min(1.0, c);
+
+	k = clamp(remap(k, c, 1.0, 0.0, 1.0), 0.0, 1.0); // cloud coverage
 
 	return this->max_density * k;
 }

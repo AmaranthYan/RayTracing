@@ -20,7 +20,7 @@ public:
 
 	virtual double value(const vec3& dir, double tm) const override
 	{
-		const auto cos = vec3::dot(ortho.w, vec3::unit(dir));		
+		const auto cos = vec3::dot(ortho.w, vec3::unit(dir));
 		return cos < 0.0 ? 0.0 : cos / M_PI;
 	}
 
@@ -41,7 +41,7 @@ __forceinline vec3 cos_pdf::random_cos_direction()
 	const auto r2 = drand();
 	const auto phi = 2.0 * M_PI * r1;
 	const auto sin_theta = sqrt(r2);
-	const auto cos_theta = sqrt(1 - r2);
+	const auto cos_theta = sqrt(1.0 - r2);
 
 	return vec3
 	{

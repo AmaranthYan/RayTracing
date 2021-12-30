@@ -10,18 +10,10 @@ __forceinline T clamp(const T& val, const T& min, const T& max)
 	return min < val ? (max > val ? val : max) : min;
 }
 
-#pragma optimize( "", off )
 __forceinline double remap(double v, double t0, double t1, double s0, double s1)
 {
-	double r = s0 + (v - t0) / (t1 - t0) * (s1 - s0);
-
-	if (r != r)
-	{
-		__debugbreak();
-	}
-	return r;
+	return s0 + (v - t0) / (t1 - t0) * (s1 - s0);
 }
-#pragma optimize( "", on )
 
 class texture
 {
