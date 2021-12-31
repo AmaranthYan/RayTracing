@@ -42,8 +42,8 @@ template<class NOISE_P, class NOISE_W>
 class cloud : public medium
 {
 public:
-	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w) : medium(b, d, a), perlin(p), worley(w), freq(0.5), cov(0.85), height_fading(false), height_min(), height_max(), fade_dist() {}
-	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w, double fq, double cv) : medium(b, d, a), perlin(p), worley(w), freq(fq), cov(cv), height_fading(false), height_min(), height_max(), fade_dist() {}
+	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w) : medium(b, d, a), perlin(p), worley(w), freq(0.5), cov(0.85), height_fading(false), height_min(), height_max(), inv_fade_dist() {}
+	cloud(const std::shared_ptr<hittable>& b, double d, const std::shared_ptr<texture> a, const NOISE_P& p, const NOISE_W& w, double fq, double cv) : medium(b, d, a), perlin(p), worley(w), freq(fq), cov(cv), height_fading(false), height_min(), height_max(), inv_fade_dist() {}
 	cloud(const std::shared_ptr<hittable>& b, double d, const vec3& c, const NOISE_P& p, const NOISE_W& w) : cloud(b, d, std::make_shared<solid_color>(c), p, w) {}
 	cloud(const std::shared_ptr<hittable>& b, double d, const vec3& c, const NOISE_P& p, const NOISE_W& w, double fq, double cv) : cloud(b, d, std::make_shared<solid_color>(c), p, w, fq, cv) {}
 
@@ -51,7 +51,7 @@ public:
 	{
 		height_min = min;
 		height_max = max;
-		fade_dist = dist;
+		inv_fade_dist = 1.0 / dist;
 
 		height_fading = true;
 	}
@@ -68,7 +68,7 @@ private:
 	double cov;
 
 	double height_min, height_max;
-	double fade_dist;
+	double inv_fade_dist;
 	bool height_fading;
 };
 
@@ -85,14 +85,8 @@ double cloud<NOISE_P, NOISE_W>::density(const vec3& pos) const
 	if (this->height_fading)
 	{
 		// coverage fading on y-axis
-		if (pos.y < this->height_min)
-		{
-			c = remap(pos.y, this->height_min, this->height_min - this->fade_dist, c, 1.0);
-		}
-		else if (pos.y > this->height_max)
-		{
-			c = remap(pos.y, this->height_max, this->height_max + this->fade_dist, c, 1.0);
-		}
+		const auto f = std::max(0.0, std::max(this->height_min - pos.y, pos.y - this->height_max));
+		c = c + (1.0 - c) * f * this-> inv_fade_dist;
 	}	
 	c = std::min(1.0, c);
 
