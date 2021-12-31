@@ -146,6 +146,7 @@
     <ClInclude Include="source\hittable\hittable.h" />
     <ClInclude Include="source\lib\stb_image.h" />
     <ClInclude Include="source\lib\stb_image_write.h" />
+    <ClInclude Include="source\material\glossy.h" />
     <ClInclude Include="source\math\mat3.h" />
     <ClInclude Include="source\material\material.h" />
     <ClInclude Include="source\hittable\medium.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="source\3d\bvh.cpp" />
     <ClCompile Include="source\hittable\hittable.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\material\glossy.cpp" />
     <ClCompile Include="source\material\material.cpp" />
     <ClCompile Include="source\hittable\medium.cpp" />
     <ClCompile Include="source\hittable\mesh.cpp" />

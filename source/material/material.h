@@ -13,14 +13,16 @@ struct scatter_record
 		spec_atten = atten;
 	}
 
-	void set_non_specular(const std::shared_ptr<pdf>& pdf)
+	void set_non_specular(const std::shared_ptr<pdf>& pdf, double rate = 0.5)
 	{
 		is_specular = false;
 		sample_pdf = pdf;
+		sample_rate = rate;
 	}
 
 	// non-specular ray
 	std::shared_ptr<pdf> sample_pdf;
+	double sample_rate; // mixture rate of pdf sampling and light sampling, default to 0.5
 	
 	// specular ray
 	ray spec_scatt; 
