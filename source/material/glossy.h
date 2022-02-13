@@ -46,7 +46,7 @@ __forceinline vec3 glossy::fresnel(const vec3& v, const vec3& h, double ri, cons
 	if (vh > 0.0)
 	{
 		// use albedo for metal color and metallic for dielectric color
-		// use f0 to lerp between the 2 colors, low refractive = dielectric, high refractive = metal
+		// use f0 to lerp between the 2 colors, metal ri < 1, dielectric ri > 1
 		double f0 = (1.0 - ri) / (1.0 + ri);
 		f0 *= f0;
 
@@ -60,7 +60,7 @@ __forceinline vec3 glossy::fresnel(const vec3& v, const vec3& h, double ri, cons
 		};
 
 		// Fresnel-Schlick approximation
-		return r0 + (vec3(1.0, 1.0, 1.0) - r0) * pow(1.0 - vh, 5);
+		return r0 + vec3(1.0 - r0.r, 1.0 - r0.g, 1.0 - r0.b) * pow(1.0 - vh, 5);
 	}
 	return vec3(0.0, 0.0, 0.0);
 }

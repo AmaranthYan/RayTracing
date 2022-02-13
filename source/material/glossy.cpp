@@ -4,7 +4,7 @@ bool glossy::scatter(const ray& r, const hit_result& hit, scatter_record& scatt)
 {
 	double rough = this->roughness_metallic_refractive->sample(hit.u, hit.v, hit.pos).r;
 	double alpha = glossy::rough_to_alpha(rough);
-	scatt.set_non_specular(std::make_shared<ggx_pdf>(hit.norm, -r.dir(), alpha), 0.8);
+	scatt.set_non_specular(std::make_shared<ggx_pdf>(hit.norm, -r.dir(), alpha), 1.0 - 0.5 * alpha);
 	return !vec3::is_back(r.dir(), hit.norm);
 }
 
@@ -39,7 +39,7 @@ vec3 glossy::brdf_cos(const ray& r, const hit_result& hit, const ray& scatt) con
 		const auto g = glossy::geometry(view, incident, half, aa);
 
 		// metallic surface doesn't diffuse light hence the (1.0 - metal)
-		const auto kd = (vec3(1.0, 1.0, 1.0) - f) * (1.0 - metal);
+		const auto kd = vec3(1.0 - f.r, 1.0 - f.g, 1.0 - f.b) * (1.0 - metal);
 
 		const auto diffuse = kd * color * in / M_PI;
 		const auto specular = f * d * g / (4.0 * vn);
@@ -62,5 +62,5 @@ double ggx_pdf::value(const vec3& dir, double tm) const
 vec3 ggx_pdf::generate(double tm) const
 {
 	const vec3 half = ggx_pdf::random_half_vector(this->alpha_sqr); // generate the half vector h
-	return this->ortho.local(reflect(-this->view, half)); // reflect view using h as normal
+	return reflect(-this->view, this->ortho.local(half)); // reflect view using world h as normal
 }

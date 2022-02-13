@@ -29,7 +29,7 @@ unsigned image_height = static_cast<unsigned>(image_width / aspect_ratio);
 
 stbi_uc* out; // output uint8 array
 
-constexpr int samples_per_pixel = 256;
+constexpr int samples_per_pixel = 1024;
 constexpr int max_depth = 50;
 #define USE_BVH
 
@@ -78,7 +78,7 @@ vec3 color(const ray& r, const std::shared_ptr<hittable>& world, const std::shar
 		auto proba = pdf->value(scatt.dir(), r.tm());
 
 		// avoid NaN caused by very low probability rays
-		if (proba > 1e-8)
+		if (proba > 0.0)
 		{
 			auto atten = result.mat->brdf_cos(r, result, scatt);
 			// early out if BRDF yields 0
@@ -242,11 +242,11 @@ void sah_bvh(shared_ptr<hittable_list>& world, shared_ptr<hittable_list>& lights
 	cornell_box(world, lights);
 	
 #ifdef DEBUG_BVH
-	shared_ptr<hittable> m = make_shared<mesh>("assets/bunny.obj", nullptr);
-	m = make_shared<rotate>(m, vec3(0, 1, 0), 180);
-	m = make_shared<scale>(m, 120.0);
-	m = make_shared<translate>(m, vec3(225, 36, 275));
-	world->add_hittable(m);
+	shared_ptr<hittable> bunny = make_shared<mesh>("assets/bunny.obj", nullptr);
+	bunny = make_shared<rotate>(bunny, vec3(0, 1, 0), 180);
+	bunny = make_shared<scale>(bunny, 120.0);
+	bunny = make_shared<translate>(bunny, vec3(225, 36, 275));
+	world->add_hittable(bunny);
 #endif // DEBUG_BVH
 }
 
@@ -254,41 +254,12 @@ void glossy_material(shared_ptr<hittable_list>& world, shared_ptr<hittable_list>
 {
 	cornell_box(world, lights);
 
-	/*
-	shared_ptr<hittable> m = make_shared<mesh>("assets/bunny.obj", nullptr);
-	m = make_shared<rotate>(m, vec3(0, 1, 0), 180);
-	m = make_shared<scale>(m, 120.0);
-	m = make_shared<translate>(m, vec3(225, 36, 275));
-	world->add_hittable(m);
-	*/
-
-	auto glossy00 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.0, 0.0, 1.5);
-	auto glossy01 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.0, 0.5, 1.5);
-	auto glossy02 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.0, 1.0, 1.5);
-
-	auto glossy10 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.5, 0.0, 1.5);
-	auto glossy11 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.5, 0.5, 1.5);
-	auto glossy12 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.5, 1.0, 1.5);
-
-	auto glossy20 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.0, 1.0, 2.5);
-	auto glossy21 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 0.5, 1.0, 2.5);
-	auto glossy22 = make_shared<glossy>(vec3(0.8, 0.8, 0.8), 1.0, 1.0, 2.5);
-	
-	shared_ptr<hittable> sphere00 = make_shared<sphere>(vec3(125, 50, 275), 50, glossy00);
-	shared_ptr<hittable> sphere01 = make_shared<sphere>(vec3(275, 50, 275), 50, glossy01);
-	shared_ptr<hittable> sphere02 = make_shared<sphere>(vec3(425, 50, 275), 50, glossy02);
-
-	shared_ptr<hittable> sphere10 = make_shared<sphere>(vec3(125, 50, 425), 50, glossy20);
-	shared_ptr<hittable> sphere11 = make_shared<sphere>(vec3(275, 50, 425), 50, glossy21);
-	shared_ptr<hittable> sphere12 = make_shared<sphere>(vec3(425, 50, 425), 50, glossy22);
-
-	//world->add_hittable(sphere00);
-	//world->add_hittable(sphere01);
-	//world->add_hittable(sphere02);
-
-	world->add_hittable(sphere10);
-	world->add_hittable(sphere11);
-	world->add_hittable(sphere12);
+	auto gold = make_shared<glossy>(vec3(1.0, 0.78, 0.34), 0.0, 0.4, -0.7);
+	shared_ptr<hittable> bunny = make_shared<mesh>("assets/bunny.obj", gold);
+	bunny = make_shared<rotate>(bunny, vec3(0, 1, 0), 180);
+	bunny = make_shared<scale>(bunny, 120.0);
+	bunny = make_shared<translate>(bunny, vec3(225, 36, 275));
+	world->add_hittable(bunny);
 }
 
 void demo_scene(shared_ptr<hittable_list>& world, shared_ptr<hittable_list>& lights)
@@ -298,7 +269,6 @@ void demo_scene(shared_ptr<hittable_list>& world, shared_ptr<hittable_list>& lig
 	// cloud block
 	shared_ptr<hittable> block = make_shared<aligned_box>(vec3(0, 260, 0), vec3(260, 420, 260), nullptr);
 	block = make_shared<translate>(block, vec3(225, 0, 225));
-	//objects.add_hittable(make_shared<noise_medium<decltype(perlin)>>(box1, 0.01, vec3(0, 0, 0), perlin, 0, 0.1));
 	auto cloud_block = make_shared<cloud<decltype(perlin), decltype(worley)>>(block, 0.08, vec3(1.0, 1.0, 1.0), perlin, worley, 1.0 / 128.0, 0.81);
 	cloud_block->set_height_fading(280, 400, 20); // fading based on height
 	world->add_hittable(cloud_block);

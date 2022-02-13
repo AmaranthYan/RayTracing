@@ -86,7 +86,7 @@ private:
 __forceinline vec3 metal::reflectance(double cos, const vec3& r0)
 {
 	// Fresnel-Schlick approximation for metal
-	return r0 + (vec3(1.0, 1.0, 1.0) - r0) * pow(1.0 - cos, 5);
+	return r0 + vec3(1.0 - r0.r, 1.0 - r0.g, 1.0 - r0.b) * pow(1.0 - cos, 5);
 }
 
 class dielectric : public material
