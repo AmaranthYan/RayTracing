@@ -18,7 +18,7 @@ BVH of scene from the books, spheres|BVH of custom mesh, triangles
 :-:|:-:
 ![BVH1](https://github.com/AmaranthYan/RayTracing/blob/main/output/final/bvh_1.png)|![BVH2](https://github.com/AmaranthYan/RayTracing/blob/main/output/final/bvh_2.png)
 
-### Materials TODO
+### Materials
 *  Fresnel-Schlick reflectance for metal
 *  Beer-Lambert absorption for dielectric  
 Add ray absorption inside dielectric materials based on the Beer-Lambert law, absorption rate can be tuned on each channel of RGB to create colored dielectrics.
@@ -29,7 +29,7 @@ D - GGX Trowbridge-Reitz NDF
 G - Smith GGX Disney  
 GGX sampling is used as importance sampling for this material.
 
-Glossy gold bunny
+Glossy gold bunny, 1024 samples
 :-:
 ![BVH2](https://github.com/AmaranthYan/RayTracing/blob/main/output/final/glossy_1024.png)
 
@@ -39,7 +39,7 @@ Worley noise are implemented in addition to Perlin noise.
 *  Non-uniform arbitrary cloud volume using 3D noise  
 Cloud volume is created with a mixture of Perlin and Worley noises and the ray sampling in non-uniform medium is done thanks to Woodcock tracking. I also extended the medium boundary code to accept non-convex shapes as boundaries.
 
-### Renderer TODO
+### Renderer
 *  optimized random functions  
 The original random 3D vector generation in the books adopted a loop and retry strategy, a loop-free method has been put in place to replace it.
 *  expendable threaded rendering and fixed-size thread buffer memory  
