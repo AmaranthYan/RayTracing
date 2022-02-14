@@ -35,9 +35,9 @@ Glossy gold bunny, 1024 samples
 
 ### Cloud Volume
 *  Worley noise  
-Worley noise are implemented in addition to Perlin noise.
+Worley noise was implemented in addition to Perlin noise.
 *  Non-uniform arbitrary cloud volume using 3D noise  
-Cloud volume is created with a mixture of Perlin and Worley noises and the ray sampling in non-uniform medium is done thanks to Woodcock tracking. I also extended the medium boundary code to accept non-convex shapes as boundaries.
+Cloud volume can be created with a mixture of Perlin and Worley noises and the ray sampling in non-uniform medium is done thanks to Woodcock tracking. I also extended the medium boundary code to accept non-convex shapes as boundaries.
 
 ### Renderer
 *  optimized random functions  
