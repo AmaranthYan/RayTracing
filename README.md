@@ -12,7 +12,7 @@ Some avanced rendering features are missing from the trilogy or being presented 
 
 ### Acceleration Structure
 *  BVH using strict Surface Area Heuristic(SAH)  
-The original SAH implementation yeilds suboptimal BVH structure when there are sticklike objects along the dominant axis, the strict SAH calculates surface areas along all 3 axes to determine the best possible BVH division. Debug marco has also been added to allow visualization of the BVH structre.  
+The original SAH implementation yeilds suboptimal BVH structure when there are sticklike objects along the dominant axis, the strict SAH calculates surface areas along all 3 axes to determine the best possible BVH division. Debug marco has also been added to allow visualization of the BVH structure.  
 
 BVH of scene from the books, spheres|BVH of custom mesh, triangles
 :-:|:-:
@@ -21,9 +21,9 @@ BVH of scene from the books, spheres|BVH of custom mesh, triangles
 ### Materials
 *  Fresnel-Schlick reflectance for metal
 *  Beer-Lambert absorption for dielectric  
-Add ray absorption inside dielectric materials based on the Beer-Lambert law, absorption rate can be tuned on each channel of RGB to create colored dielectrics.
+Add ray absorption inside dielectric materials based on the Beer-Lambert law, absorption rate can be tuned for each channel of the RGB to create colored dielectrics.
 *  Glossy material using Cook-Torrance BRDF model  
-Physically base glossy material, each part of the Cook-Torrance BRDF is chosen as follows:  
+Physically based glossy material, each part of the Cook-Torrance BRDF is chosen as follows:  
 F - Fresnel-Schlick  
 D - GGX Trowbridge-Reitz NDF  
 G - Smith GGX Disney  
@@ -36,7 +36,7 @@ Glossy gold bunny, 1024 samples
 ### Cloud Volume
 *  Worley noise  
 Worley noise was implemented in addition to Perlin noise.
-*  Non-uniform arbitrary cloud volume using 3D noise  
+*  Non-uniform arbitrary cloud volume using 3D noises  
 Cloud volume can be created with a mixture of Perlin and Worley noises and the ray sampling in non-uniform medium is done thanks to Woodcock tracking. I also extended the medium boundary code to accept non-convex shapes as boundaries.
 
 ### Renderer
